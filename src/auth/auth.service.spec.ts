@@ -1,11 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
 import { getModelToken } from '@nestjs/mongoose';
-import { User } from '../schemas/user.model';
 import { JwtService } from '@nestjs/jwt';
+
+import { AuthService } from './auth.service';
+import { User } from '../schemas/user.model';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { RegisterAuthDto } from './dto/register-auth.dto';
-import * as bcrypt from 'bcryptjs';
+import { DatabaseModuleMock } from '../database/database.module.mock';
+
+import * as bcryptModule from 'bcryptjs';
+import * as handleBcrypt from './utils/handleBcrypt';
+const bcrypt = jest.createMockFromModule<typeof bcryptModule>('bcryptjs');
 
 const jwtServiceMock = {
   sign: jest.fn(() => 'mocked-token'),
@@ -21,6 +26,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [DatabaseModuleMock],
       providers: [
         AuthService,
         {
@@ -56,6 +62,10 @@ describe('AuthService', () => {
       jwtServiceMock.sign.mockReturnValueOnce('mocked-token');
 
       jest.spyOn(bcrypt, 'compare').mockResolvedValueOnce(true);
+      jest
+        .spyOn(handleBcrypt, 'generateHash')
+        .mockResolvedValueOnce('mocked-hash');
+      jest.spyOn(handleBcrypt, 'compareHash').mockResolvedValueOnce(true);
 
       const result = await service.login(userLoginBody);
 

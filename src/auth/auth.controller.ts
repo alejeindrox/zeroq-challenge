@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
@@ -29,7 +29,7 @@ export class AuthController {
   @ApiBearerAuth()
   @Post('refresh-token')
   @UseGuards(JwtAuthGuard)
-  async refreshAccessToken(@Body('oldToken') oldToken: string) {
+  async refreshAccessToken(@Headers('Authorization') oldToken: string) {
     return this.authService.refreshAccessToken(oldToken);
   }
 }

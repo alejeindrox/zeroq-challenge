@@ -1,35 +1,35 @@
 import {
-  CanActivate,
+  Inject,
   ExecutionContext,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { Cache } from 'cache-manager';
 
 @Injectable()
-export class JwtAuthGuard implements CanActivate {
-  private redisClient: Cache;
-
-  constructor() {}
-
-  setRedisClient(redisClient: Cache) {
-    this.redisClient = redisClient;
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(@Inject('REDIS_CLIENT') private readonly redisClient: Cache) {
+    super();
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const baseGuardResult = await super.canActivate(context);
+    if (!baseGuardResult) {
+      return false;
+    }
     const request = context.switchToHttp().getRequest();
+    const { user } = request;
+    const { authorization } = request.headers;
+    const token = authorization.split(' ')[1];
 
-    const storedOldToken = await this.redisClient.get(
-      `old_token:${request.user.email}`,
+    const storedToken = await this.redisClient.get(
+      `active_token:${user.email}`,
     );
 
-    if (
-      storedOldToken &&
-      storedOldToken === request.headers.authorization.split(' ')[1]
-    ) {
-      throw new UnauthorizedException('Old token cannot be used.');
+    if (storedToken && storedToken === token) {
+      return true;
     }
-
-    return true;
+    throw new UnauthorizedException('Old token cannot be used.');
   }
 }

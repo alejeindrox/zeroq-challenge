@@ -1,17 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../schemas/user.model';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { DatabaseModuleMock } from '../database/database.module.mock';
+
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { User } from '../schemas/user.model';
 
 describe('AuthController', () => {
   let controller: AuthController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [],
+      imports: [DatabaseModuleMock],
       controllers: [AuthController],
       providers: [
         {

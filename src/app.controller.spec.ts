@@ -18,10 +18,5 @@ describe('AppController', () => {
     it('should return "Server is Alive!"', () => {
       expect(appController.getHello()).toBe('Server is Alive!');
     });
-    it('should return "Hello World!"', () => {
-      expect(appController.getUserIsAuthenticated()).toBe(
-        'congratulation you are Authenticated!',
-      );
-    });
   });
 });

@@ -13,9 +13,9 @@ import Redis from 'ioredis';
     CacheModule.registerAsync({
       useFactory: () => ({
         store: 'redis',
-        host: 'localhost',
+        host: 'redis',
         port: 6379,
-        ttl: 1800,
+        ttl: 1800000,
       }),
     }),
   ],
@@ -23,7 +23,7 @@ import Redis from 'ioredis';
     {
       provide: 'REDIS_CLIENT',
       useValue: new Redis({
-        host: 'localhost',
+        host: 'redis',
         port: 6379,
       }),
     },

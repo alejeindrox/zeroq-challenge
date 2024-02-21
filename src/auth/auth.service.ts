@@ -61,7 +61,7 @@ export class AuthService {
 
     const token = this.jwtService.sign(payload);
 
-    await this.saveOldTokenInRedis(userExist.email, token);
+    await this.saveTokenInRedis(userExist.email, token);
 
     const data = {
       token,
@@ -72,15 +72,19 @@ export class AuthService {
   }
 
   /**
-   * Saving old token in Redis with expiration time
+   * Saving token in Redis with expiration time
    * @param userEmail
    * @param token
    */
-  private async saveOldTokenInRedis(userEmail: string, token: string) {
-    const expirationTimeInSeconds = 1800;
-    const redisKey = `old_token:${userEmail}`;
+  private async saveTokenInRedis(userEmail: string, token: string) {
+    const redisKey = `active_token:${userEmail}`;
+    const previousToken = await this.redisClient.get(redisKey);
 
-    await this.redisClient.set(redisKey, token, expirationTimeInSeconds);
+    if (previousToken) {
+      await this.redisClient.del(redisKey);
+    }
+
+    await this.redisClient.set(redisKey, token);
   }
 
   /**
@@ -89,7 +93,9 @@ export class AuthService {
    * @returns
    */
   public async refreshAccessToken(oldToken: string) {
-    const payload = this.jwtService.decode(oldToken) as { id: string };
+    const token = oldToken.split(' ')[1];
+    const payload = this.jwtService.decode(token) as { id: string };
+
     if (!payload) {
       throw new HttpException('Invalid token', HttpStatus.BAD_REQUEST);
     }
@@ -101,8 +107,8 @@ export class AuthService {
 
     const newToken = this.jwtService.sign({ id: user._id });
 
-    await this.saveOldTokenInRedis(user.email, oldToken);
+    await this.saveTokenInRedis(user.email, newToken);
 
-    return { newToken };
+    return { token: newToken };
   }
 }
